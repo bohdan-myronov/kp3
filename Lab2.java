@@ -263,7 +263,7 @@ class Create extends Element {
 class Process extends Element {
 
     int[] devices; // states
-    int[] queues;
+    int[] queues; // NOT USED
     double[] tnexts;
     private int queue, maxqueue, failure;
     private double meanQueue;
@@ -272,7 +272,7 @@ class Process extends Element {
     public Process(double delay, int numberOfDevices, boolean priorityRouting) {
         super(delay);
         devices = new int[numberOfDevices];
-        queues = new int[numberOfDevices];
+        queues = new int[numberOfDevices]; // NOT USED
         tnexts = new double[numberOfDevices];
         for (int i = 0; i < numberOfDevices;i++){
             tnexts[i] = Double.MAX_VALUE;
@@ -354,14 +354,12 @@ class Process extends Element {
                     break;
                 }
                 else{
-                    freeDevice = getLeastBusyQueueDevice();
-                    int queueOfDevice = getQueueOfDevice(freeDevice);
-                    if (queueOfDevice< getMaxqueue()){
-                        setQueueOfDevice(freeDevice, queueOfDevice+1);
+                    if (getQueue() < getMaxqueue()){
+                        setQueue(getQueue()+1);
                     }
                     else{
                         failure++;
-                        System.out.println("All devices are busy!");
+                        System.out.println("All devices are busy and queue is full!");
 
                     }
                     break;
@@ -381,8 +379,8 @@ public void outAct() {
             next.inAct();
         }
         setDeviceState(deviceId,0);
-        if (getQueueOfDevice(deviceId) > 0) {
-            setQueueOfDevice(deviceId, getQueueOfDevice(deviceId) - 1);
+        if (getQueue() > 0) {
+            setQueue(getQueue() - 1);
             setDeviceState(deviceId,1);
             setDeviceTnext(deviceId, super.getTcurr() + super.getDelay());
         }
@@ -417,7 +415,7 @@ public void outAct() {
     @Override
 public void printInfo() {
         super.printInfo();
-        System.out.println(super.getName() + ": " + getOverallQueueLength() + " left");
+        System.out.println(super.getName() + ": " + getQueue() + " left");
         System.out.println("failure = " + this.getFailure());
     }
 
@@ -426,7 +424,7 @@ public void doStatistics(double delta, double time) {
         double _averageDeviceLoad = getAverageDeviceLoad();
         _averageDeviceLoad += delta / time * getStatesOfTheDevices();
         setAverageDeviceLoad(_averageDeviceLoad);
-        meanQueue = getMeanQueue() + getQueuesLengthOfTheDevices() * delta;
+        meanQueue = getMeanQueue() + getQueue() * delta;
     }
 int getStatesOfTheDevices(){
     int sum = 0;
@@ -508,9 +506,7 @@ class Model {
                 Process p = (Process) e;
                 failureCounter += p.getFailure();
                 System.out.println("mean length of queue = "
-                        + p.getMeanQueue() / tcurr
-                        + "\nfailure probability = "
-                        + p.getFailure() / (double) p.getQuantity());
+                        + p.getMeanQueue() / tcurr);
                 System.out.println("average device load:" + p.getAverageDeviceLoad());
             }
         }
@@ -524,20 +520,20 @@ class Model {
 class Lab2 {
 
     public static void main(String[] args) {
-        Create c = new Create(0.1);
+        Create c = new Create(0.05);
 
-        Process p1 = new Process(1,10,false);
-        Process p2 = new Process(1,10,false);
-        Process p3 = new Process(1,10,false);
+        Process p1 = new Process(1,20,false);
+        Process p2 = new Process(1,20,false);
+        Process p3 = new Process(1,20,false);
 
         System.out.println("creator = " + c.getId() + " | processor1 = " + p1.getId() + " | processor2 = " + p2.getId() + " | processor3 = " + p3.getId());
         c.setNextElement(p1);
         p1.setNextElement(p2);
         p2.setNextElement(p3);
 
-        p1.setMaxqueue(50);
-        p2.setMaxqueue(50);
-        p3.setMaxqueue(50);
+        p1.setMaxqueue(5);
+        p2.setMaxqueue(5);
+        p3.setMaxqueue(5);
 
         c.setName("Creator 0");
         p1.setName("Process 1");
